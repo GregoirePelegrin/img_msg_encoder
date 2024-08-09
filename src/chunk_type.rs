@@ -62,7 +62,8 @@ impl FromStr for ChunkType {
 	type Err = Error;
 
 	fn from_str(s: &str) -> Result<Self> {
-		todo!(1);
+		Self.chunk_type = ;
+		Ok(Self)
 	}
 }
 
