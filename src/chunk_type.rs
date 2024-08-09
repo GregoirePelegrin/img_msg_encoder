@@ -1,4 +1,5 @@
 use std::fmt;
+use std::str;
 use std::str::FromStr;
 use crate::{Error, Result};
 
@@ -16,54 +17,56 @@ impl ChunkType {
 
 	// Returns the property state of the first byte as described in the PNG spec
 	pub fn is_critical(&self) -> bool {
-		// TODO: Check if there is a better way to do this, even if this works
-		self.chunk_type[0] > u8::try_from('A').unwrap() && self.chunk_type[0] < u8::try_from('Z').unwrap()
+		self.chunk_type[0].is_ascii_uppercase()
 	}
 
 	// Returns the property state of the second byte as described in the PNG spec
 	pub fn is_public(&self) -> bool {
-		todo!(3);
+		self.chunk_type[1].is_ascii_uppercase()
 	}
 
 	// Returns the property state of the third byte as described in the PNG spec
 	pub fn is_reserved_bit_valid(&self) -> bool {
-		todo!(4);
+		self.chunk_type[2].is_ascii_uppercase()
 	}
 
 	// Returns the property state of the fourth byte as described in the PNG spec
 	pub fn is_safe_to_copy(&self) -> bool {
-		todo!(5);
+		self.chunk_type[3].is_ascii_lowercase()
 	}
 
 	// Returns true if the reserved byte is valid and all four bytes are represented by the characters A-Z or a-z
 	// Note that this chunk type should always be valid as it is validated during construction
 	pub fn is_valid(&self) -> bool {
-		todo!(6);
+		self.chunk_type.iter().fold(true, |acc: bool, byte: &u8| {acc && byte.is_ascii()})
 	}
 
-	// Valid bytess are represented by the characters A-Z or a-z
+	// Valid bytes are represented by the characters A-Z or a-z
 	pub fn is_valid_byte(byte: u8) -> bool {
-		todo!(7);
+		byte.is_ascii()
 	}
 }
 impl TryFrom<[u8; 4]> for ChunkType {
 	type Error = Error;
 
 	fn try_from(bytes: [u8; 4]) -> Result<Self> {
-		todo!(2);
+		Ok(Self{chunk_type: bytes})
 	}
 }
 impl fmt::Display for ChunkType {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		todo!(8);
+		write!(f, "{}", )
 	}
 }
 impl FromStr for ChunkType {
 	type Err = Error;
 
 	fn from_str(s: &str) -> Result<Self> {
-		Self.chunk_type = ;
-		Ok(Self)
+		Ok(
+			Self{
+				chunk_type: <[u8; 4]>::try_from(s.as_bytes()).unwrap()
+			}
+		)
 	}
 }
 
