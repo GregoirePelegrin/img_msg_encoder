@@ -73,6 +73,7 @@ impl FromStr for ChunkType {
 #[cfg(test)]
 mod tests {
 	use std::str::FromStr;
+
 	use crate::chunk_type::ChunkType;
 
 	#[test]
