@@ -10,7 +10,7 @@ mod tests {
     fn testing_chunk() -> Chunk {
         let data_length: u32 = 42;
         let chunk_type: &[u8] = "RuSt".as_bytes();
-        let message_bytes: &[u8] = "This is where your secre message will be!".as_bytes();
+        let message_bytes: &[u8] = "This is where your secret message will be!".as_bytes();
         let crc: u32 = 2882656334;
 
         let chunk_data: Vec<u8> = data_length
