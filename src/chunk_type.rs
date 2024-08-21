@@ -1,13 +1,13 @@
+use std::error::Error;
 use std::fmt;
 use std::str;
 use std::str::FromStr;
-use crate::{Error, Result};
 
 /// A validated PNG chunk. See PNG spec for more details.
 /// http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ChunkType {
-	chunk_type: [u8; 4]
+	chunk_type: [u8; 4],
 }
 impl ChunkType {
 	// Returns the raw bytes contained in this chunk
@@ -38,20 +38,14 @@ impl ChunkType {
 	// Returns true if the reserved byte is valid and all four bytes are represented by the characters A-Z or a-z
 	// Note that this chunk type should always be valid as it is validated during construction
 	pub fn is_valid(&self) -> bool {
-		self.chunk_type.iter().fold(true, |acc: bool, byte: &u8| {acc && byte.is_ascii()})
+		self.is_reserved_bit_valid()
+			&& self.chunk_type.iter().fold(true, |acc: bool, byte: &u8| {acc && byte.is_ascii_alphabetic()})
 	}
 
 	// Valid bytes are represented by the characters A-Z or a-z
-	pub fn is_valid_byte(byte: u8) -> bool {
-		byte.is_ascii()
-	}
-}
-impl TryFrom<[u8; 4]> for ChunkType {
-	type Error = Error;
-
-	fn try_from(bytes: [u8; 4]) -> Result<Self> {
-		Ok(Self{chunk_type: bytes})
-	}
+	// pub fn is_valid_byte(byte: u8) -> bool {
+	// 	byte.is_ascii()
+	// }
 }
 impl fmt::Display for ChunkType {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -62,20 +56,29 @@ impl fmt::Display for ChunkType {
 		write!(f, "{}", formatted_element.join(""))
 	}
 }
-impl FromStr for ChunkType {
-	type Err = Error;
+impl TryFrom<[u8; 4]> for ChunkType {
+	type Error = Box<dyn Error>;
 
-	fn from_str(s: &str) -> Result<Self> {
-		Ok(
-			Self{
-				chunk_type: <[u8; 4]>::try_from(s.as_bytes()).unwrap()
-			}
-		)
+	fn try_from(bytes: [u8; 4]) -> Result<Self, Self::Error> {
+		let result: Self = Self{chunk_type: bytes};
+		if bytes.iter().fold(true, |acc: bool, byte: &u8| {acc && byte.is_ascii_alphabetic()}) {
+			return Ok(result);
+		}
+		Err("Invalid chunk type".into())
+	}
+}
+impl FromStr for ChunkType {
+	type Err = Box<dyn Error>;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		let bytes: [u8; 4] = s.as_bytes().try_into()?;
+		ChunkType::try_from(bytes)
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use std::error::Error;
 	use std::str::FromStr;
 
 	use crate::chunk_type::ChunkType;
@@ -147,8 +150,8 @@ mod tests {
 		let chunk: ChunkType = ChunkType::from_str("Rust").unwrap();
 		assert!(!chunk.is_valid());
 
-		let chunk: ChunkType = ChunkType::from_str("Rult").unwrap();
-		assert!(!chunk.is_valid());
+		let chunk: Result<ChunkType, Box<dyn Error>> = ChunkType::from_str("Ru1t");
+		assert!(chunk.is_err());
 	}
 
 	#[test]
