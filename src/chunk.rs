@@ -4,7 +4,7 @@ use std::fmt;
 use crate::chunk_type::ChunkType;
 
 #[derive(Debug, Clone)]
-pub struct Chunk{
+pub struct Chunk {
     length: u32,
     chunk_type: ChunkType,
     data: Vec<u8>,
@@ -75,8 +75,13 @@ impl TryFrom<&[u8]> for Chunk {
     type Error = Box<dyn Error>;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Box<dyn Error>> {
-        if bytes.len() < 12 {
-            return Err("Invalid chunk (chunk total size cannot be inferior to 12 bytes)".into());
+        if bytes.len() < 4 + 4 + 4 {
+            return Err(
+                format!(
+                    "Invalid chunk (chunk total size cannot be inferior to 12 bytes ({}))",
+                    bytes.len()
+                ).into()
+            );
         }
 
         let length: u32 = u32::from_be_bytes(bytes[0..4].try_into()?);
@@ -91,7 +96,8 @@ impl TryFrom<&[u8]> for Chunk {
         );
         if computed_crc != crc {
             return Err(format!(
-                "Invalid chunk (given chunk crc isn't equal to computed crc: {crc} != {computed_crc})"
+                "Invalid chunk (given chunk crc isn't equal to computed crc: {} != {})",
+                crc, computed_crc
             ).into());
         }
 
