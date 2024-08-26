@@ -116,16 +116,10 @@ impl TryFrom<&[u8]> for Png {
 impl fmt::Display for Png {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Png {{",)?;
-        writeln!(f, "  Header: {}", match std::str::from_utf8(self.header()) {
-            Ok(value) => value,
-            Err(_) => "",
-        })?;
+        writeln!(f, "  Header: {}", String::from_utf8_lossy(self.header()))?;
         writeln!(f, "  Chunks: {{",)?;
         for chunk in self.chunks.iter() {
-            writeln!(f, "    {}", match std::str::from_utf8(chunk.as_bytes().as_slice()) {
-                Ok(value) => value,
-                Err(_) => "",
-            })?;
+            writeln!(f, "    {}", String::from_utf8_lossy(chunk.as_bytes().as_slice()))?;
         }
         writeln!(f, "  }}",)?;
         writeln!(f, "}}",)?;
