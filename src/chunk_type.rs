@@ -49,11 +49,8 @@ impl ChunkType {
 }
 impl fmt::Display for ChunkType {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		let formatted_element = self.chunk_type
-                        .iter()
-                        .map(|elt| format!("{}", *elt as char))
-			.collect::<Vec<_>>();
-		write!(f, "{}", formatted_element.join(""))
+		write!(f, "{}", String::from_utf8_lossy(&self.chunk_type))?;
+		Ok(())
 	}
 }
 impl TryFrom<[u8; 4]> for ChunkType {
