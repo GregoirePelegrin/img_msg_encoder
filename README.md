@@ -5,3 +5,4 @@ Should try and put the message in the chunk_type instead of the data.
 Make it so that you can have more than one chunk for a message, and find all of them when decoding. 
     (With additional info, like indices?)
 Make the add chunk append somewhere in the middle
+Make use of the chunk_type? Encrypt message and communicate public key through chunk_type?
