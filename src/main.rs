@@ -1,6 +1,10 @@
 use std::error::Error;
+use std::fs;
 use clap::Parser;
+use crate::chunk::Chunk;
+use crate::chunk_type::ChunkType;
 use crate::commands::Commands;
+use crate::png::Png;
 
 mod args;
 mod chunk;
@@ -13,29 +17,47 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match &cli.command {
         Commands::Encode(encode_args) => {
-            println!(
-                "encode used: args are {:?} {} {} {:?}",
-                encode_args.filename, encode_args.chunk_type,
-                encode_args.message, encode_args.output_filename
+            let mut png: Png = Png::from_file(encode_args.filename.as_os_str())?;
+            let chunk: Chunk = Chunk::new(
+                ChunkType::try_from(
+                    <&[u8] as TryInto<[u8; 4]>>::try_into(encode_args.chunk_type.as_bytes()).unwrap()
+                )?,
+                encode_args.message.as_bytes().to_vec()
             );
+            png.append_chunk(chunk);
+            fs::write(encode_args.output_filename.to_owned().unwrap(), png.as_bytes())?;
         }
         Commands::Decode(decode_args) => {
-            println!(
-                "decode used: args are {:?} {}",
-                decode_args.filename, decode_args.chunk_type
-            );
+            let png: Png = Png::from_file(decode_args.filename.as_os_str())?;
+            let chunk: Option<&Chunk> = png.chunk_by_type(decode_args.chunk_type.as_str());
+            match chunk {
+                Some(chunk) => {
+                    println!(
+                        "The following message has been found for you: {}",
+                        String::from_utf8_lossy(chunk.data())
+                    );
+                }
+                None => {
+                    println!("No message for you here!");
+                }
+            }
         }
         Commands::Remove(remove_args) => {
-            println!(
-                "remove used: args are {:?} {}",
-                remove_args.filename, remove_args.chunk_type
+            let mut png: Png = Png::from_file(remove_args.filename.as_os_str())?;
+            let result_removal: Result<Chunk, Box<dyn Error>> = png.remove_first_chunk(
+                remove_args.chunk_type.as_str()
             );
+            match result_removal {
+                Ok(chunk) => {
+                    println!("Removing: {}", chunk);
+                    fs::write(remove_args.filename.to_owned(), png.as_bytes())?;
+                }
+                Err(err) => {println!("{}", err);}
+            }
         }
         Commands::Print(print_args) => {
-            println!(
-                "print used: file to print {:?}",
-                print_args.filename
-            );
+            let png: Png = Png::from_file(print_args.filename.as_os_str())?;
+            println!("{}", png);
         }
     }
 

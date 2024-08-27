@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fmt;
+use std::{fmt, fs};
 use std::path::Path;
 use crate::chunk::Chunk;
 
@@ -20,7 +20,9 @@ impl Png {
     }
     // Creates a PNG from a file path
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
-        todo!()
+        let f: Vec<u8> = fs::read(path)?;
+        let png: Self = Self::try_from(&f[..])?;
+        Ok(png)
     }
 
     // This PNG header
