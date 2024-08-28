@@ -140,16 +140,15 @@ impl fmt::Display for Png {
 mod tests {
     use std::error::Error;
     use crate::chunk::Chunk;
-    use crate::chunk_type::ChunkType;
     use crate::png::Png;
 
     fn chunk_from_strings(chunk_type: &str, data: &str) -> Result<Chunk, Box<dyn Error>> {
-        use std::str::FromStr;
-
-        let chunk_type: ChunkType = ChunkType::from_str(chunk_type)?;
         let data: Vec<u8> = data.bytes().collect();
 
-        Ok(Chunk::new(chunk_type, data))
+        Ok(Chunk::new(
+            <&[u8] as TryInto<[u8; 4]>>::try_into(chunk_type.as_bytes()).unwrap(),
+            data
+        ))
     }
     fn testing_chunks() -> Vec<Chunk> {
         vec![
