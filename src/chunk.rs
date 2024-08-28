@@ -11,8 +11,11 @@ pub struct Chunk {
     crc: u32,
 }
 impl Chunk {
-    // Init function
-    pub fn new(chunk_type: [u8; 4], data: Vec<u8>) -> Chunk {
+    pub const DEFAULT_UPPERCASE: u8 = 90;
+    pub const DEFAULT_LOWERCASE: u8 = 122;
+
+    // Init functions
+    pub fn try_from_type_data(chunk_type: [u8; 4], data: Vec<u8>) -> Result<Self, Box<dyn Error>> {
         let bytes: Vec<u8> = chunk_type
             .iter()
             .chain(data.iter())
@@ -20,12 +23,53 @@ impl Chunk {
             .collect();
         let crc: u32 = Crc::<u32>::new(&CRC_32_ISO_HDLC).checksum(&bytes);
 
-        Chunk{
+        Ok(Chunk{
             length: data.len() as u32,
-            chunk_type: ChunkType::try_from(chunk_type).unwrap(),
+            chunk_type: ChunkType::try_from(chunk_type)?,
             data,
             crc
+        })
+    }
+    pub fn try_from_bytes(bytes: &[u8], default: Option<bool>) -> Result<Self, Box<dyn Error>> {
+        if bytes.len() < 4 + 4 + 4 {
+            return Err(
+                format!(
+                    "Invalid chunk (chunk total size cannot be inferior to 12 bytes ({}))",
+                    bytes.len()
+                ).into()
+            );
         }
+
+        let length: u32 = u32::from_be_bytes(bytes[0..4].try_into()?);
+        let given_chunk_type: [u8; 4] = bytes[4..8].try_into()?;
+        let mut new_chunk_type: [u8; 4];
+        match default {
+            Some(true) => {
+                new_chunk_type = given_chunk_type.map(
+                    |char: u8| {
+                        if char >= 97 {Self::DEFAULT_LOWERCASE} else {Self::DEFAULT_UPPERCASE}
+                    }
+                );
+            }
+            _ => {
+                new_chunk_type = given_chunk_type;
+            }
+        }
+        let data: Vec<u8> = bytes[8..(8 + length as usize)].to_vec();
+        let computed_crc: u32 = Crc::<u32>::new(&CRC_32_ISO_HDLC).checksum(
+            &bytes[4..(4 + 4 + length as usize)]
+        );
+        let crc: u32 = u32::from_be_bytes(
+            bytes[(4 + 4 + length as usize)..(4 + 4 + length as usize + 4)].try_into()?
+        );
+        if computed_crc != crc {
+            return Err(format!(
+                "Invalid chunk (given chunk crc isn't equal to computed crc: {} != {})",
+                crc, computed_crc
+            ).into());
+        }
+
+        Chunk::try_from_type_data(new_chunk_type, data)
     }
 
     // The length of the data portion of the chunk
@@ -75,32 +119,7 @@ impl TryFrom<&[u8]> for Chunk {
     type Error = Box<dyn Error>;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Box<dyn Error>> {
-        if bytes.len() < 4 + 4 + 4 {
-            return Err(
-                format!(
-                    "Invalid chunk (chunk total size cannot be inferior to 12 bytes ({}))",
-                    bytes.len()
-                ).into()
-            );
-        }
-
-        let length: u32 = u32::from_be_bytes(bytes[0..4].try_into()?);
-        let ct: [u8; 4] = bytes[4..8].try_into()?;
-        let data: Vec<u8> = bytes[8..(8 + length as usize)].to_vec();
-        let computed_crc: u32 = Crc::<u32>::new(&CRC_32_ISO_HDLC).checksum(
-            &bytes[4..(4 + 4 + length as usize)]
-        );
-        let crc: u32 = u32::from_be_bytes(
-            bytes[(4 + 4 + length as usize)..(4 + 4 + length as usize + 4)].try_into()?
-        );
-        if computed_crc != crc {
-            return Err(format!(
-                "Invalid chunk (given chunk crc isn't equal to computed crc: {} != {})",
-                crc, computed_crc
-            ).into());
-        }
-
-        Ok(Chunk::new(ct, data))
+        Self::try_from_bytes(bytes, Some(true))
     }
 }
 impl fmt::Display for Chunk {
@@ -147,10 +166,10 @@ mod tests {
     fn test_new_chunk() {
         let chunk_type: ChunkType = ChunkType::from_str("RuSt").unwrap();
         let data: Vec<u8> = "This is where your secret message will be!".as_bytes().to_vec();
-        let chunk: Chunk = Chunk::new(
+        let chunk: Chunk = Chunk::try_from_type_data(
             <&[u8] as TryInto<[u8; 4]>>::try_into("RuSt".as_bytes()).unwrap(),
             data
-        );
+        ).unwrap();
 
         assert_eq!(chunk.length(), 42);
         assert_eq!(chunk.crc(), 2882656334);
