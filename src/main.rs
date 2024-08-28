@@ -19,9 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Commands::Encode(encode_args) => {
             let mut png: Png = Png::from_file(encode_args.filename.as_os_str())?;
             let chunk: Chunk = Chunk::new(
-                ChunkType::try_from(
-                    <&[u8] as TryInto<[u8; 4]>>::try_into(encode_args.chunk_type.as_bytes()).unwrap()
-                )?,
+                <&[u8] as TryInto<[u8; 4]>>::try_into(encode_args.chunk_type.as_bytes()).unwrap(),
                 encode_args.message.as_bytes().to_vec()
             );
             png.append_chunk_somewhere(chunk);

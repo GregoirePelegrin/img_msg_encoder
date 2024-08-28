@@ -12,8 +12,8 @@ pub struct Chunk {
 }
 impl Chunk {
     // Init function
-    pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Chunk {
-        let bytes: Vec<u8> = chunk_type.bytes()
+    pub fn new(chunk_type: [u8; 4], data: Vec<u8>) -> Chunk {
+        let bytes: Vec<u8> = chunk_type
             .iter()
             .chain(data.iter())
             .copied()
@@ -22,7 +22,7 @@ impl Chunk {
 
         Chunk{
             length: data.len() as u32,
-            chunk_type,
+            chunk_type: ChunkType::try_from(chunk_type).unwrap(),
             data,
             crc
         }
@@ -86,7 +86,6 @@ impl TryFrom<&[u8]> for Chunk {
 
         let length: u32 = u32::from_be_bytes(bytes[0..4].try_into()?);
         let ct: [u8; 4] = bytes[4..8].try_into()?;
-        let chunk_type: ChunkType = ChunkType::try_from(ct)?;
         let data: Vec<u8> = bytes[8..(8 + length as usize)].to_vec();
         let computed_crc: u32 = Crc::<u32>::new(&CRC_32_ISO_HDLC).checksum(
             &bytes[4..(4 + 4 + length as usize)]
@@ -101,12 +100,7 @@ impl TryFrom<&[u8]> for Chunk {
             ).into());
         }
 
-        Ok(Chunk{
-            length,
-            chunk_type,
-            data,
-            crc
-        })
+        Ok(Chunk::new(ct, data))
     }
 }
 impl fmt::Display for Chunk {
@@ -153,7 +147,10 @@ mod tests {
     fn test_new_chunk() {
         let chunk_type: ChunkType = ChunkType::from_str("RuSt").unwrap();
         let data: Vec<u8> = "This is where your secret message will be!".as_bytes().to_vec();
-        let chunk: Chunk = Chunk::new(chunk_type, data);
+        let chunk: Chunk = Chunk::new(
+            <&[u8] as TryInto<[u8; 4]>>::try_into("RuSt".as_bytes()).unwrap(),
+            data
+        );
 
         assert_eq!(chunk.length(), 42);
         assert_eq!(chunk.crc(), 2882656334);
