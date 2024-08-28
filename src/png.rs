@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::{fmt, fs};
 use std::path::Path;
+use rand::Rng;
+
 use crate::chunk::Chunk;
 
 #[derive(Debug, Clone)]
@@ -49,6 +51,10 @@ impl Png {
     // Appends a chunk to the end of the chunks list
     pub fn append_chunk(&mut self, chunk: Chunk) {
         self.chunks.append(&mut vec![chunk])
+    }
+    // Appends a chunk somewhere in the chunks list
+    pub fn append_chunk_somewhere(&mut self, chunk: Chunk){
+        self.chunks.insert(rand::thread_rng().gen_range(0..self.chunks.len()), chunk);
     }
     // Removes the first chunk with the specified chunk_type from the png
     pub fn remove_first_chunk(&mut self, chunk_type: &str) -> Result<Chunk, Box<dyn Error>> {

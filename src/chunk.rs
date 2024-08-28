@@ -114,7 +114,8 @@ impl fmt::Display for Chunk {
         writeln!(f, "Chunk {{",)?;
         writeln!(f, "  Length: {}", self.length())?;
         writeln!(f, "  Type: {}", self.chunk_type())?;
-        writeln!(f, "  Data: {} bytes", self.data().len())?;
+        writeln!(f, "  Data length: {} bytes", self.data().len())?;
+        writeln!(f, "  Content: {}", String::from_utf8_lossy(self.data()))?;
         writeln!(f, "  Crc: {}", self.crc())?;
         writeln!(f, "}}",)?;
         Ok(())
