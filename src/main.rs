@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 )?,
                 encode_args.message.as_bytes().to_vec()
             );
-            png.append_chunk(chunk);
+            png.append_chunk_somewhere(chunk);
             fs::write(encode_args.output_filename.to_owned().unwrap(), png.as_bytes())?;
         }
         Commands::Decode(decode_args) => {
@@ -32,10 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let chunk: Option<&Chunk> = png.chunk_by_type(decode_args.chunk_type.as_str());
             match chunk {
                 Some(chunk) => {
-                    println!(
-                        "The following message has been found for you: {}",
-                        String::from_utf8_lossy(chunk.data())
-                    );
+                    println!("The following chunk has been found for you: {}", chunk);
                 }
                 None => {
                     println!("No message for you here!");

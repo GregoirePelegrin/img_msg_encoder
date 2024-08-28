@@ -43,9 +43,9 @@ impl ChunkType {
 	}
 
 	// Valid bytes are represented by the characters A-Z or a-z
-	// pub fn is_valid_byte(byte: u8) -> bool {
-	// 	byte.is_ascii()
-	// }
+	/*pub fn is_valid_byte(byte: u8) -> bool {
+		byte.is_ascii()
+	}*/
 }
 impl fmt::Display for ChunkType {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
