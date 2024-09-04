@@ -69,7 +69,7 @@ impl Chunk {
             ).into());
         }
 
-        Chunk::try_from_type_data(new_chunk_type, data)
+        Chunk::try_from_type_data(given_chunk_type, data)
     }
 
     // The length of the data portion of the chunk

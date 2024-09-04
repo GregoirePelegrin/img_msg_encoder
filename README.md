@@ -10,6 +10,7 @@ Obviously using [the Rust Language book](https://doc.rust-lang.org/book/title-pa
     - I'd like to do an occurrences count for each chunk types (including the critical ones)
     - does it allow the storage of a message in the chunk type of non-critical chunks?
    - should be more discreet in terms of size
+   - SEEMS IT CANNOT BE DONE, AS MANY CHUNKS HAVE A CRITICAL TYPE, WHICH CANNOT BE CHANGED
 - [ ] More than one message
     - some way to link messages between them through chunk types?
     - unordered?
