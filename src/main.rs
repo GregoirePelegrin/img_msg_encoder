@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //     }
     // }
 
-    let png: Png = Png::from_file("/home/gregoirepelegrinadmin/Téléchargements/test.png")?;
+    let png: Png = Png::from_file("/home/gregoirepelegrinadmin/Téléchargements/bigger_image.png")?;
     png.chunks().iter().for_each(|chunk| {println!("{}", String::from_utf8_lossy(&chunk.chunk_type().bytes()))});
 
     let critical_chunks: Vec<&[u8]> = vec![
